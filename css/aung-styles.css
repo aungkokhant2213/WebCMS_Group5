@@ -1,0 +1,28 @@
+/* Tooltip styling */
+.tooltip {
+  position: absolute;
+  background-color: rgba(0,0,0,0.75);
+  color: white;
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 4px;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+}
+
+/* Legend styling */
+.legend {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+}
+.legend span:first-child {
+  margin-right: 6px;
+  font-weight: 600;
+  color: #444;
+}
