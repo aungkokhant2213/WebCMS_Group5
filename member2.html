@@ -24,28 +24,33 @@
 
   <main>
     <h2>Charts by Aung</h2>
-    <div id="chart-container">
-      <!-- Chart 1: Heatmap -->
-      <section id="heatmap">
-        <h3>Heatmap: Hourly Temperature vs Day</h3>
-        <svg width="800" height="300"></svg>
-        <div class="legend" id="heatmap-legend"></div>
-      </section>
 
-      <!-- Chart 2: Scatter Plot -->
-      <section id="scatterplot">
-        <h3>Scatter Plot: Wind Speed vs Temperature</h3>
-        <svg width="800" height="300"></svg>
-        <div class="legend" id="scatter-legend"></div>
-      </section>
-
-      <!-- Chart 3: Polar Area Chart -->
-      <section id="polar">
-        <h3>Polar Area Chart: Wind Direction vs Speed</h3>
-        <svg width="500" height="500"></svg>
-        <div class="legend" id="polar-legend"></div>
-      </section>
+    <div class="city-search">
+      <label for="citySelect">Select City:</label>
+      <select id="citySelect" onchange="updateCity()">
+        <option value="Waterloo,43.4643,-80.5204">Waterloo</option>
+        <option value="Kitchener,43.4516,-80.4925">Kitchener</option>
+        <option value="Toronto,43.6510,-79.3470">Toronto</option>
+        <option value="Ottawa,45.4215,-75.6972">Ottawa</option>
+        <option value="Vancouver,49.2827,-123.1207">Vancouver</option>
+      </select>
     </div>
+
+    <div id="chart-container">
+      <div id="polar" class="chart-container">
+        <h3>Polar Area Chart - Wind Direction vs. Speed</h3>
+        <svg width="600" height="400"></svg>
+      </div>
+
+      <div id="scatterplot" class="chart-container">
+        <h3>Scatter Plot - Wind Speed vs. Temperature</h3>
+        <svg width="600" height="400"></svg>
+      </div>
+
+      <div id="heatmap" class="chart-container">
+        <h3>Heatmap - Hourly Temperature vs. Day</h3>
+        <svg width="900" height="400"></svg>
+      </div>
   </main>
 
   <footer>

@@ -26,3 +26,22 @@
   font-weight: 600;
   color: #444;
 }
+
+.city-search {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.city-search label {
+  font-weight: 600;
+  margin-right: 0.5rem;
+  color: #2c3e50;
+}
+
+.city-search select {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
