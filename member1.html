@@ -5,30 +5,324 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Rutvik Charts</title>
   <link rel="stylesheet" href="css/style.css" />
+  <style>
+    /* Light inline helpers so it looks decent even without extra CSS */
+    .controls { display:flex; flex-wrap:wrap; gap:10px; margin:16px 0; }
+    .controls button { padding:10px 14px; border:0; border-radius:20px; cursor:pointer; font-weight:600; }
+    #chart { background:#fff; border-radius:12px; padding:16px; box-shadow:0 8px 20px rgba(0,0,0,.08); }
+    .api-row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+    .api-row input, .api-row select { padding:8px 10px; border-radius:10px; border:1px solid #ddd; }
+    .hint { font-size:.9rem; opacity:.75; margin-top:6px; }
+    svg { width:100%; height:auto; }
+  </style>
 </head>
 <body>
-    <header>
-      <h1>Rutvik - Visualizations</h1>
-    </header>
-    <nav>
-      <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="member1.html" class="active">Rutvik</a></li>
-        <li><a href="member2.html">Aung</a></li>
-        <li><a href="member3.html">Dhruvi</a></li>
-        <li><a href="member4.html">Parvinder</a></li>
-      </ul>
-    </nav>
+  <header>
+    <h1>Rutvik - Visualizations</h1>
+  </header>
+
+  <nav>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="member1.html" class="active">Rutvik</a></li>
+      <li><a href="member2.html">Aung</a></li>
+      <li><a href="member3.html">Dhruvi</a></li>
+      <li><a href="member4.html">Parvinder</a></li>
+    </ul>
+  </nav>
 
   <main>
     <h2>Charts by Rutvik</h2>
+
     <div id="chart-container">
-      <!-- Add your D3 visualizations here -->
+      <div class="controls">
+        <button onclick="renderPieChart()">Pie Chart</button>
+        <button onclick="renderLineChart()">Line Chart</button>
+        <button onclick="renderBarChart()">Bar Chart</button>
+        <button onclick="renderHeatMap()">Heat Map</button>
+        <button onclick="renderRadialChart()">Radial Chart</button>
+      </div>
+
+      <!-- Simple API controls (optional) -->
+      <div class="api-row">
+        <label>Latitude: <input id="lat" type="number" step="0.01" value="43.65"></label>
+        <label>Longitude: <input id="lon" type="number" step="0.01" value="-79.38"></label>
+        <label>Start: <input id="start" type="date" value="2024-07-01"></label>
+        <label>End: <input id="end" type="date" value="2024-07-07"></label>
+        <button onclick="refetch()">Fetch</button>
+      </div>
+      <div class="hint">Tip: change dates or location and click “Fetch”.</div>
+
+      <div id="chart" style="margin-top:16px;"></div>
     </div>
   </main>
 
   <footer>
     <p>&copy; 2025 | Group 5 - Data Visualization Project</p>
   </footer>
+
+  <!-- D3 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <!-- All charts in one script -->
+  <script>
+    let weatherData;
+
+    function buildUrl(lat, lon, start, end) {
+      const params = new URLSearchParams({
+        latitude: lat, longitude: lon,
+        start_date: start, end_date: end,
+        daily: "temperature_2m_max,temperature_2m_min,precipitation_sum",
+        timezone: "auto"
+      });
+      return "https://archive-api.open-meteo.com/v1/archive?" + params.toString();
+    }
+
+    async function fetchData() {
+      const lat = document.getElementById('lat').value || 43.65;
+      const lon = document.getElementById('lon').value || -79.38;
+      const start = document.getElementById('start').value || "2024-07-01";
+      const end = document.getElementById('end').value || "2024-07-07";
+
+      const url = buildUrl(lat, lon, start, end);
+      const res = await fetch(url);
+      const json = await res.json();
+      if (!json.daily || !json.daily.time) {
+        throw new Error("No daily data returned. Try different dates/location.");
+      }
+      weatherData = json.daily;
+    }
+
+    function refetch() {
+      fetchData().then(() => renderLineChart()).catch(err => {
+        d3.select("#chart").html("<p style='color:#b00;'>" + err.message + "</p>");
+      });
+    }
+
+    function clearChart() {
+      d3.select("#chart").html("");
+    }
+
+    function renderPieChart() {
+      if (!weatherData) return;
+      clearChart();
+
+      const classes = weatherData.precipitation_sum.map(p => {
+        if (p === 0) return "Sunny";
+        if (p < 2) return "Light Rain";
+        return "Rainy";
+      });
+
+      const counts = Array.from(d3.rollup(classes, v => v.length, d => d));
+      const w = 420, h = 420, r = Math.min(w, h) / 2 - 20;
+
+      const color = d3.scaleOrdinal()
+        .domain(counts.map(d => d[0]))
+        .range(d3.schemeCategory10);
+
+      const pie = d3.pie().value(d => d[1]);
+      const arc = d3.arc().innerRadius(0).outerRadius(r);
+
+      const svg = d3.select("#chart").append("svg")
+        .attr("viewBox", `0 0 ${w} ${h}`)
+        .append("g")
+        .attr("transform", `translate(${w/2},${h/2})`);
+
+      const g = svg.selectAll("path")
+        .data(pie(counts))
+        .enter().append("g")
+        .attr("class", "slice");
+
+      g.append("path")
+        .attr("d", arc)
+        .attr("fill", d => color(d.data[0]))
+        .append("title")
+        .text(d => `${d.data[0]}: ${d.data[1]}`);
+
+      g.append("text")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .style("font-weight", 700)
+        .text(d => d.data[0]);
+    }
+
+    function renderLineChart() {
+      if (!weatherData) return;
+      clearChart();
+
+      const w = 800, h = 480, margin = {top: 30, right: 20, bottom: 50, left: 50};
+
+      const x = d3.scalePoint()
+        .domain(weatherData.time)
+        .range([margin.left, w - margin.right]);
+
+      const y = d3.scaleLinear()
+        .domain([d3.min(weatherData.temperature_2m_min), d3.max(weatherData.temperature_2m_max)]).nice()
+        .range([h - margin.bottom, margin.top]);
+
+      const svg = d3.select("#chart").append("svg").attr("viewBox", `0 0 ${w} ${h}`);
+
+      const line = d3.line()
+        .x((d, i) => x(weatherData.time[i]))
+        .y(d => y(d))
+        .curve(d3.curveMonotoneX);
+
+      svg.append("path")
+        .datum(weatherData.temperature_2m_max)
+        .attr("d", line)
+        .attr("fill", "none")
+        .attr("stroke", "#e74c3c")
+        .attr("stroke-width", 2);
+
+      svg.append("path")
+        .datum(weatherData.temperature_2m_min)
+        .attr("d", line)
+        .attr("fill", "none")
+        .attr("stroke", "#3498db")
+        .attr("stroke-width", 2);
+
+      svg.append("g")
+        .attr("transform", `translate(0,${h - margin.bottom})`)
+        .call(d3.axisBottom(x).tickFormat(d => d.slice(5)));
+
+      svg.append("g")
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(d3.axisLeft(y));
+
+      // legend
+      const legend = svg.append("g").attr("transform", `translate(${w - 160},${margin.top})`);
+      legend.append("rect").attr("width", 150).attr("height", 46).attr("fill", "none").attr("stroke", "#ddd").attr("rx", 8);
+      legend.append("circle").attr("cx", 12).attr("cy", 15).attr("r", 6).attr("fill", "#e74c3c");
+      legend.append("text").attr("x", 26).attr("y", 19).text("Max Temp");
+      legend.append("circle").attr("cx", 12).attr("cy", 33).attr("r", 6).attr("fill", "#3498db");
+      legend.append("text").attr("x", 26).attr("y", 37).text("Min Temp");
+    }
+
+    function renderBarChart() {
+      if (!weatherData) return;
+      clearChart();
+
+      const w = 800, h = 480, margin = {top: 30, right: 20, bottom: 50, left: 50};
+
+      const x = d3.scaleBand()
+        .domain(weatherData.time)
+        .range([margin.left, w - margin.right])
+        .padding(.25);
+
+      const y = d3.scaleLinear()
+        .domain([0, d3.max(weatherData.precipitation_sum)]).nice()
+        .range([h - margin.bottom, margin.top]);
+
+      const svg = d3.select("#chart").append("svg").attr("viewBox", `0 0 ${w} ${h}`);
+
+      svg.selectAll("rect")
+        .data(weatherData.precipitation_sum)
+        .enter().append("rect")
+        .attr("x", (d, i) => x(weatherData.time[i]))
+        .attr("y", d => y(d))
+        .attr("width", x.bandwidth())
+        .attr("height", d => y(0) - y(d))
+        .attr("fill", "steelblue")
+        .append("title").text((d, i) => `${weatherData.time[i]}: ${d} mm`);
+
+      svg.append("g")
+        .attr("transform", `translate(0,${h - margin.bottom})`)
+        .call(d3.axisBottom(x).tickFormat(d => d.slice(5)));
+
+      svg.append("g")
+        .attr("transform", `translate(${margin.left},0)`)
+        .call(d3.axisLeft(y));
+    }
+
+    function renderHeatMap() {
+      if (!weatherData) return;
+      clearChart();
+
+      const w = 800, h = 240, margin = {top: 20, right: 20, bottom: 50, left: 50};
+
+      const x = d3.scaleBand()
+        .domain(weatherData.time)
+        .range([margin.left, w - margin.right])
+        .padding(0.05);
+
+      const color = d3.scaleSequential()
+        .domain([d3.min(weatherData.temperature_2m_max), d3.max(weatherData.temperature_2m_max)])
+        .interpolator(d3.interpolateYlOrRd);
+
+      const svg = d3.select("#chart").append("svg").attr("viewBox", `0 0 ${w} ${h}`);
+
+      svg.selectAll("rect")
+        .data(weatherData.temperature_2m_max)
+        .enter().append("rect")
+        .attr("x", (d, i) => x(weatherData.time[i]))
+        .attr("y", margin.top)
+        .attr("width", x.bandwidth())
+        .attr("height", h - margin.top - margin.bottom)
+        .attr("fill", d => color(d))
+        .append("title").text((d, i) => `${weatherData.time[i]}: ${d}°C max`);
+
+      svg.append("g")
+        .attr("transform", `translate(0,${h - margin.bottom})`)
+        .call(d3.axisBottom(x).tickFormat(d => d.slice(5)));
+    }
+
+    function renderRadialChart() {
+      if (!weatherData) return;
+      clearChart();
+
+      const data = weatherData.time.map((t, i) => ({
+        day: t,
+        min: weatherData.temperature_2m_min[i],
+        max: weatherData.temperature_2m_max[i]
+      }));
+
+      const w = 520, h = 520, R = 220;
+      const svg = d3.select("#chart").append("svg").attr("viewBox", `0 0 ${w} ${h}`);
+      const g = svg.append("g").attr("transform", `translate(${w/2},${h/2})`);
+
+      const angle = d3.scaleBand().domain(data.map(d => d.day)).range([0, 2*Math.PI]).padding(0.02);
+      const radius = d3.scaleLinear()
+        .domain([d3.min(data, d => d.min), d3.max(data, d => d.max)]).nice()
+        .range([60, R]);
+
+      g.selectAll("path")
+        .data(data)
+        .enter().append("path")
+        .attr("d", d => d3.arc()({
+          startAngle: angle(d.day),
+          endAngle: angle(d.day) + angle.bandwidth(),
+          innerRadius: radius(d.min),
+          outerRadius: radius(d.max)
+        }))
+        .attr("fill", "#ff8066")
+        .attr("stroke", "#fff")
+        .append("title").text(d => `${d.day}\nMin: ${d.min}°C\nMax: ${d.max}°C`);
+
+      // rings
+      const ticks = radius.ticks(4);
+      g.selectAll(".ring")
+        .data(ticks)
+        .enter().append("circle")
+        .attr("r", d => radius(d))
+        .attr("fill", "none")
+        .attr("stroke", "#eee");
+
+      g.selectAll(".ring-label")
+        .data(ticks)
+        .enter().append("text")
+        .attr("y", d => -radius(d))
+        .attr("dy", -2)
+        .attr("text-anchor", "middle")
+        .style("font-size", "10px")
+        .text(d => d + "°C");
+    }
+
+    // initial load
+    fetchData()
+      .then(() => renderLineChart())
+      .catch(err => {
+        d3.select("#chart").html("<p style='color:#b00;'>" + err.message + "</p>");
+      });
+  </script>
 </body>
 </html>
