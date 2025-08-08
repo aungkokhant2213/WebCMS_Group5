@@ -3,13 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dhruvi Charts</title>
+  <title>Dhruvi - Marine Weather Dashboard</title>
+  <meta name="description" content="Real-time marine weather dashboard with interactive charts and current conditions">
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/marine-weather.css" />
+  <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
     <header>
-      <h1>Dhruvi - Visualizations</h1>
+      <h1>Dhruvi - Marine Weather Dashboard</h1>
+      <p class="header-subtitle">Real-time marine weather data visualization</p>
     </header>
+    
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
@@ -21,14 +26,98 @@
     </nav>
 
   <main>
-    <h2>Charts by Dhruvi</h2>
-    <div id="chart-container">
-      <!-- Add your D3 visualizations here -->
-    </div>
+    <section class="dashboard-intro">
+      <h2>Marine Weather Visualizations</h2>
+      <p>Explore real-time marine weather data from the Open-Meteo API. Enter coordinates to view wave height, direction, temperature, and period data with interactive charts.</p>
+    </section>
+    
+    <section class="controls-section">
+      <div class="controls">
+        <div class="control-group">
+          <label for="latitude">Latitude:</label>
+          <input type="number" id="latitude" value="54.544587" step="0.0001" placeholder="Latitude (-90 to 90)" min="-90" max="90">
+        </div>
+        
+        <div class="control-group">
+          <label for="longitude">Longitude:</label>
+          <input type="number" id="longitude" value="10.227487" step="0.0001" placeholder="Longitude (-180 to 180)" min="-180" max="180">
+        </div>
+        
+        <button onclick="fetchMarineData()" aria-label="Fetch marine weather data">
+          <span class="button-icon">🌊</span>
+          Get Marine Weather Data
+        </button>
+      </div>
+      
+     
+    </section>
+
+    <section class="current-conditions-section">
+      <div id="current-conditions" class="current-conditions" style="display: none;" role="region" aria-label="Current Marine Conditions">
+        <h3>Current Marine Conditions</h3>
+        <div class="current-grid" id="current-grid" role="list">
+          <!-- Current conditions will be populated here -->
+        </div>
+      </div>
+    </section>
+
+    <section class="loading-section">
+      <div id="loading" class="loading" style="display: none;" role="status" aria-live="polite">
+        <div class="loading-content">
+          <div class="loading-spinner"></div>
+          <p>Loading marine weather data...</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="error-section">
+      <div id="error" class="error" style="display: none;" role="alert" aria-live="assertive">
+        <!-- Error messages will be displayed here -->
+      </div>
+    </section>
+
+    <section class="charts-section">
+      <div class="grid">
+        <article class="chart-container" role="region" aria-label="Wave Height Chart">
+          <h3 class="chart-title">Wave Height Over Time</h3>
+          <p class="chart-description">Shows significant wave height trends over the forecast period</p>
+          <div id="wave-height-chart" class="chart-content"></div>
+        </article>
+        
+        <article class="chart-container" role="region" aria-label="Wave Direction Chart">
+          <h3 class="chart-title">Wave Direction</h3>
+          <p class="chart-description">Displays mean wave direction changes in degrees (0-360°)</p>
+          <div id="wave-direction-chart" class="chart-content"></div>
+        </article>
+        
+        <article class="chart-container" role="region" aria-label="Sea Temperature Chart">
+          <h3 class="chart-title">Sea Surface Temperature</h3>
+          <p class="chart-description">Shows sea surface temperature variations over time</p>
+          <div id="temperature-chart" class="chart-content"></div>
+        </article>
+        
+        <article class="chart-container" role="region" aria-label="Wave Period Chart">
+          <h3 class="chart-title">Wave Period</h3>
+          <p class="chart-description">Displays wave period trends in seconds</p>
+          <div id="wave-period-chart" class="chart-content"></div>
+        </article>
+      </div>
+    </section>
+    
+    <section class="data-info">
+      <div class="info-card">
+        <h3>Data Source</h3>
+        <p>This dashboard uses the <a href="https://open-meteo.com/en/docs/marine-weather-api" target="_blank" rel="noopener">Open-Meteo Marine Weather API</a> to provide real-time marine weather data.</p>
+        <p><strong>Data includes:</strong> Wave height, direction, period, sea surface temperature, wind wave height, and swell wave height.</p>
+      </div>
+    </section>
   </main>
 
   <footer>
     <p>&copy; 2025 | Group 5 - Data Visualization Project</p>
+    <p>Built with D3.js and modern web technologies</p>
   </footer>
+
+  <script src="js/marine-weather.js"></script>
 </body>
 </html>
